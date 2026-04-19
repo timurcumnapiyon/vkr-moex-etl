@@ -10,8 +10,7 @@ build:
     dockerfile: Dockerfile
     platform: "linux/amd64"
 
-# Для локального запуска блок push можно оставить пустым
-# или настроить отправку в registry.
+# For local usage, keep push empty or configure your registry.
 push: []
 
 pull:
@@ -28,23 +27,23 @@ definitions:
       auto_remove: true
       env:
         PYTHON_KEYRING_BACKEND: "keyring.backends.null.Keyring"       
-        PG_RAW_HOST: "pg_raw"
-        PG_RAW_PORT: "5432"
-        PG_RAW_DB: "pg_raw"
-        PG_RAW_USER: "postgres"
-        PG_RAW_PASSWORD: "postgres"
+        PG_RAW_HOST: "${PG_RAW_HOST}"
+        PG_RAW_PORT: "${PG_RAW_PORT}"
+        PG_RAW_DB: "${PG_RAW_DB}"
+        PG_RAW_USER: "${PG_RAW_USER}"
+        PG_RAW_PASSWORD: "${PG_RAW_PASSWORD}"
 
-        PG_DWH_HOST: "pg_dwh"
-        PG_DWH_PORT: "5432"
-        PG_DWH_DB: "pg_dwh"
-        PG_DWH_USER: "postgres"
-        PG_DWH_PASSWORD: "postgres"
+        PG_DWH_HOST: "${PG_DWH_HOST}"
+        PG_DWH_PORT: "${PG_DWH_PORT}"
+        PG_DWH_DB: "${PG_DWH_DB}"
+        PG_DWH_USER: "${PG_DWH_USER}"
+        PG_DWH_PASSWORD: "${PG_DWH_PASSWORD}"
 
-        MINIO_ENDPOINT: "http://minio:9000"
-        AWS_ACCESS_KEY_ID: "minioadmin"
-        AWS_SECRET_ACCESS_KEY: "minioadmin"
-        AWS_REGION: "us-east-1"
-        AWS_S3_FORCE_PATH_STYLE: "true"
+        MINIO_ENDPOINT: "${MINIO_ENDPOINT}"
+        AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+        AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+        AWS_REGION: "${AWS_REGION}"
+        AWS_S3_FORCE_PATH_STYLE: "${AWS_S3_FORCE_PATH_STYLE}"
         ALOR_TOKEN: "${ALOR_TOKEN}"
         ALOR_DATANAMES: "TQBR.SBER,TQBR.GMKN,TQBR.GAZP,TQBR.LKOH,TQBR.ROSN,TQBR.NVTK,TQBR.TATN,TQBR.YDEX,TQBR.MTSS,TQBR.MAGN,TQBR.SNGSP,TQBR.VTBR,TQBR.AFLT,TQBR.MOEX,TQBR.NLMK,TQBR.RUAL,TQBR.ALRS,TQBR.IRAO,TQBR.CHMF,TQBR.PIKK"
         ALOR_DAYS_BACK: "0"

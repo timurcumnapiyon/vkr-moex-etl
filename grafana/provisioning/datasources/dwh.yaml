@@ -8,11 +8,11 @@ datasources:
     isDefault: true
     editable: true
     url: pg_dwh:5432
-    user: postgres
+    user: ${PG_DWH_USER}
     secureJsonData:
-      password: postgres
+      password: ${PG_DWH_PASSWORD}
     jsonData:
-      database: pg_dwh
+      database: ${PG_DWH_DB}
       sslmode: disable
       postgresVersion: 1600
       timescaledb: true

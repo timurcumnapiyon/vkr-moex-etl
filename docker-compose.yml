@@ -9,15 +9,15 @@ services:
     container_name: pg_raw
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pg_raw
+      POSTGRES_USER: ${PG_RAW_USER}
+      POSTGRES_PASSWORD: ${PG_RAW_PASSWORD}
+      POSTGRES_DB: ${PG_RAW_DB}
       WALG_S3_PREFIX: s3://moex-backup/pg_raw
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_ENDPOINT: http://minio:9000
-      AWS_REGION: us-east-1
-      AWS_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_FORCE_PATH_STYLE: ${AWS_S3_FORCE_PATH_STYLE}
     volumes:
       - ./pg_raw/init.sql:/docker-entrypoint-initdb.d/init.sql
       - pg_raw_data:/var/lib/postgresql/data
@@ -31,15 +31,15 @@ services:
     container_name: pg_dwh
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pg_dwh
+      POSTGRES_USER: ${PG_DWH_USER}
+      POSTGRES_PASSWORD: ${PG_DWH_PASSWORD}
+      POSTGRES_DB: ${PG_DWH_DB}
       WALG_S3_PREFIX: s3://moex-backup/pg_dwh
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_ENDPOINT: http://minio:9000
-      AWS_REGION: us-east-1
-      AWS_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_FORCE_PATH_STYLE: ${AWS_S3_FORCE_PATH_STYLE}
     ports:
       - "5433:5432"
     volumes:
@@ -54,8 +54,8 @@ services:
     restart: always
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -69,8 +69,8 @@ services:
     container_name: pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
@@ -85,8 +85,11 @@ services:
     container_name: grafana
     restart: always
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      PG_DWH_USER: ${PG_DWH_USER}
+      PG_DWH_PASSWORD: ${PG_DWH_PASSWORD}
+      PG_DWH_DB: ${PG_DWH_DB}
     ports:
       - "3000:3000"
     depends_on:
@@ -101,9 +104,9 @@ services:
     container_name: prefect_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: prefect
+      POSTGRES_USER: ${PREFECT_DB_USER}
+      POSTGRES_PASSWORD: ${PREFECT_DB_PASSWORD}
+      POSTGRES_DB: ${PREFECT_DB_NAME}
     volumes:
       - prefect_db_data:/var/lib/postgresql/data
     networks:
@@ -114,8 +117,8 @@ services:
     container_name: prefect_server
     restart: always
     environment:
-      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://postgres:postgres@prefect_db:5432/prefect
-      PREFECT_API_URL: http://127.0.0.1:4200/api
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://${PREFECT_DB_USER}:${PREFECT_DB_PASSWORD}@prefect_db:5432/${PREFECT_DB_NAME}
+      PREFECT_API_URL: ${PREFECT_API_URL}
     command: prefect server start --host 0.0.0.0 --port 4200
     ports:
       - "4200:4200"
