@@ -1,0 +1,131 @@
+name: vkr
+prefect-version: 3.0.0
+
+build:
+- prefect_docker.deployments.steps.build_docker_image:
+    id: build-image
+    requires: prefect-docker>=0.4.0
+    image_name: "vkr-prefect"
+    tag: latest
+    dockerfile: Dockerfile
+    platform: "linux/amd64"
+
+# Для локального запуска блок push можно оставить пустым
+# или настроить отправку в registry.
+push: []
+
+pull:
+- prefect.deployments.steps.set_working_directory:
+    directory: /opt/prefect/vkr
+
+definitions:
+  work_pool: &docker_pool
+    name: vkr-docker-pool
+    job_variables:
+      image: "vkr-prefect:latest"
+      image_pull_policy: "Never"
+      networks: ["moex_net"]
+      auto_remove: true
+      env:
+        PYTHON_KEYRING_BACKEND: "keyring.backends.null.Keyring"       
+        PG_RAW_HOST: "pg_raw"
+        PG_RAW_PORT: "5432"
+        PG_RAW_DB: "pg_raw"
+        PG_RAW_USER: "postgres"
+        PG_RAW_PASSWORD: "postgres"
+
+        PG_DWH_HOST: "pg_dwh"
+        PG_DWH_PORT: "5432"
+        PG_DWH_DB: "pg_dwh"
+        PG_DWH_USER: "postgres"
+        PG_DWH_PASSWORD: "postgres"
+
+        MINIO_ENDPOINT: "http://minio:9000"
+        AWS_ACCESS_KEY_ID: "minioadmin"
+        AWS_SECRET_ACCESS_KEY: "minioadmin"
+        AWS_REGION: "us-east-1"
+        AWS_S3_FORCE_PATH_STYLE: "true"
+        ALOR_TOKEN: "${ALOR_TOKEN}"
+        ALOR_DATANAMES: "TQBR.SBER,TQBR.GMKN,TQBR.GAZP,TQBR.LKOH,TQBR.ROSN,TQBR.NVTK,TQBR.TATN,TQBR.YDEX,TQBR.MTSS,TQBR.MAGN,TQBR.SNGSP,TQBR.VTBR,TQBR.AFLT,TQBR.MOEX,TQBR.NLMK,TQBR.RUAL,TQBR.ALRS,TQBR.IRAO,TQBR.CHMF,TQBR.PIKK"
+        ALOR_DAYS_BACK: "0"
+        ALOR_DB_COMMIT_EVERY: "100"
+        ALOR_DB_COMMIT_INTERVAL_SECONDS: "2"
+        ALOR_JWT_TIMEOUT_SECONDS: "20"
+        ALOR_JWT_MAX_ATTEMPTS: "10"
+        ALOR_JWT_BACKOFF_SECONDS: "10"
+        ALOR_INIT_MAX_ATTEMPTS: "10"
+        ALOR_INIT_BACKOFF_SECONDS: "15"
+        FAILOVER_STALE_MINUTES: "3"
+        FALLBACK_LOOKBACK_MINUTES: "180"
+        FALLBACK_SESSION_START: "10:00:00"
+        FALLBACK_SESSION_END: "23:50:00"
+        DQ_LOOKBACK_MINUTES: "180"
+        DQ_MAX_GAP_MINUTES: "2"
+        DQ_ALLOWED_GAP_ROWS: "100"
+        DQ_SESSION_START: "10:00:00"
+        DQ_SESSION_END: "23:50:00"
+        DQ_TIMEZONE: "Europe/Moscow"
+        PG_RAW_RETENTION_DAYS: "90"
+
+deployments:
+  - name: alor-realtime
+    entrypoint: flows/vkr_flows.py:fetch_alor_to_pgraw_1min
+    schedule: null
+    tags: ["alor", "realtime"]
+    work_pool: *docker_pool
+
+  - name: moex-fallback-guard-1m
+    entrypoint: flows/vkr_flows.py:fetch_moex_iss_fallback_to_pgraw_1min
+    schedule:
+      interval: 60
+      timezone: Europe/Moscow
+    tags: ["moex", "fallback", "guard"]
+    work_pool: *docker_pool
+
+  - name: alor-raw-to-dwh-1m
+    entrypoint: flows/vkr_flows.py:load_alor_pgraw_to_pgdwh_1min
+    schedule:
+      interval: 120
+      timezone: Europe/Moscow
+    tags: ["alor", "dwh"]
+    work_pool: *docker_pool
+
+  - name: alor-daily
+    entrypoint: flows/vkr_flows.py:aggregate_alor_pgdwh_1min_to_1d
+    schedule:
+      cron: "0 21 * * *"
+      timezone: Europe/Moscow
+    tags: ["alor", "daily"]
+    work_pool: *docker_pool
+
+  - name: moex-bars-fixed
+    entrypoint: flows/vkr_flows.py:fetch_moex_iss_to_pgraw_1d
+    schedule:
+      cron: "30 6 * * *"
+      timezone: Europe/Moscow
+    tags: ["moex", "raw"]
+    work_pool: *docker_pool
+
+  - name: moex-raw-to-dwh-daily
+    entrypoint: flows/vkr_flows.py:load_moex_pgraw_to_pgdwh_1d
+    schedule:
+      cron: "0 20 * * *"
+      timezone: Europe/Moscow
+    tags: ["moex", "dwh", "daily"]
+    work_pool: *docker_pool
+
+  - name: moex-raw-to-dwh-flow
+    entrypoint: flows/vkr_flows.py:transform_moex_pgraw_to_pgdwh_agg
+    schedule:
+      cron: "10 20 * * *"
+      timezone: Europe/Moscow
+    tags: ["moex", "manual"]
+    work_pool: *docker_pool
+
+  - name: pgraw-retention-daily
+    entrypoint: flows/vkr_flows.py:cleanup_pgraw_retention
+    schedule:
+      cron: "15 2 * * *"
+      timezone: Europe/Moscow
+    tags: ["raw", "retention", "maintenance"]
+    work_pool: *docker_pool

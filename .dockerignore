@@ -1,0 +1,14 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.git
+.gitignore
+.env
+.env.*
+pg_dwh_data
+pg_raw
+alor_realtime_etl.log
+*.log

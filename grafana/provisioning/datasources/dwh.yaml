@@ -1,0 +1,18 @@
+apiVersion: 1
+
+datasources:
+  - name: pg_dwh
+    uid: pg_dwh
+    type: postgres
+    access: proxy
+    isDefault: true
+    editable: true
+    url: pg_dwh:5432
+    user: postgres
+    secureJsonData:
+      password: postgres
+    jsonData:
+      database: pg_dwh
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: true

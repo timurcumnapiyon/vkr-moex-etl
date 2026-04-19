@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+.venv/
+.venv_clean/
+__pycache__/
+*.pyc
+
+*.log
+logs/
+
+pg_raw_data/
+pg_dwh_data/
+minio_data/
+pgadmin_data/
+prefect_db_data/

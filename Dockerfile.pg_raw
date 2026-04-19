@@ -1,0 +1,12 @@
+FROM postgres:16
+
+# Install WAL-G binary so PostgreSQL archive_command can push WAL segments to MinIO/S3.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -L "https://github.com/wal-g/wal-g/releases/download/v3.0.7/wal-g-pg-ubuntu-20.04-amd64.tar.gz" \
+        -o /tmp/wal-g.tar.gz \
+    && tar -xzf /tmp/wal-g.tar.gz -C /tmp \
+    && mv /tmp/wal-g-pg-ubuntu-20.04-amd64 /usr/local/bin/wal-g \
+    && chmod +x /usr/local/bin/wal-g \
+    && rm -f /tmp/wal-g.tar.gz

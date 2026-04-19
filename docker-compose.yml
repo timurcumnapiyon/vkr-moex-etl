@@ -1,0 +1,163 @@
+version: "3.9"
+
+services:
+  pg_raw:
+    build:
+      context: .
+      dockerfile: Dockerfile.pg_raw
+    image: vkr-pg-raw:latest
+    container_name: pg_raw
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pg_raw
+      WALG_S3_PREFIX: s3://moex-backup/pg_raw
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ENDPOINT: http://minio:9000
+      AWS_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: "true"
+    volumes:
+      - ./pg_raw/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg_raw_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - moex_net
+
+  pg_dwh:
+    image: timescale/timescaledb-ha:pg16
+    container_name: pg_dwh
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pg_dwh
+      WALG_S3_PREFIX: s3://moex-backup/pg_dwh
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ENDPOINT: http://minio:9000
+      AWS_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: "true"
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./pg_dwh/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./pg_dwh_data:/var/lib/postgresql/data
+    networks:
+      - moex_net
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - moex_net
+
+  pgadmin:
+    image: dpage/pgadmin4:8.11
+    container_name: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - pg_raw
+    networks:
+      - moex_net
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - pg_dwh
+    networks:
+      - moex_net
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+  
+  prefect_db:
+    image: postgres:16
+    container_name: prefect_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: prefect
+    volumes:
+      - prefect_db_data:/var/lib/postgresql/data
+    networks:
+      - moex_net
+
+  prefect_server:
+    image: prefecthq/prefect:3.6.10-python3.11
+    container_name: prefect_server
+    restart: always
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://postgres:postgres@prefect_db:5432/prefect
+      PREFECT_API_URL: http://127.0.0.1:4200/api
+    command: prefect server start --host 0.0.0.0 --port 4200
+    ports:
+      - "4200:4200"
+    depends_on:
+      - prefect_db
+    networks:
+      - moex_net
+
+  prefect_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: vkr-prefect-worker:latest
+    container_name: prefect_worker
+    restart: always
+    environment:
+      PREFECT_API_URL: http://prefect_server:4200/api
+      ALOR_TOKEN: ${ALOR_TOKEN}
+      RECOVERY_FLOW_NAME: alor-realtime-etl
+      RECOVERY_DEPLOYMENT_NAME: alor-realtime-etl/alor-realtime
+      RECOVERY_AUTO_START: "true"
+      PREFECT_WORKER_POOL: vkr-docker-pool
+      PREFECT_WORKER_QUEUE: default
+      PREFECT_WORKER_LIMIT: "3"
+    command: /opt/prefect/prefect_worker_entrypoint.sh
+    depends_on:
+      - prefect_server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - moex_net
+
+
+
+volumes:
+  pg_raw_data:
+  pg_dwh_data:
+  minio_data:
+  pgadmin_data:
+  prefect_db_data:
+
+networks:
+  moex_net:
+    external: true
+    name: moex_net

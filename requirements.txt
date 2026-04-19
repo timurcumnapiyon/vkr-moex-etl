@@ -1,0 +1,10 @@
+psycopg2-binary
+websockets
+requests
+pandas
+pytz
+loguru
+keyring
+PyJWT
+certifi
+aiohttp

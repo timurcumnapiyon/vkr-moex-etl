@@ -1,0 +1,4 @@
+FROM prefecthq/prefect:3.6.10-python3.11
+RUN python -m pip install --no-cache-dir prefect-docker==0.7.1
+COPY scripts/prefect_worker_entrypoint.sh /opt/prefect/prefect_worker_entrypoint.sh
+RUN chmod +x /opt/prefect/prefect_worker_entrypoint.sh

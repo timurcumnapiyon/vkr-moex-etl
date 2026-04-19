@@ -1,0 +1,1552 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "lineWidth": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 0,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 16,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '5 min'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"5m\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_5min b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '15 min'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"15m\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_15min b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '30 min'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"30m\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_30min b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '1 hour'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"1h\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_1h b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "refId": "D"
+        }
+      ],
+      "title": "ALOR/Fallback Multi-Timeframe Close (Session Aware)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "PAUSED (out of session)",
+                  "color": "blue"
+                },
+                "1": {
+                  "text": "LIVE",
+                  "color": "green"
+                },
+                "2": {
+                  "text": "NO DATA",
+                  "color": "orange"
+                },
+                "3": {
+                  "text": "LATE",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              },
+              {
+                "color": "orange",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH s AS (\n  SELECT now() AT TIME ZONE 'Europe/Moscow' AS now_msk,\n         MAX(ts) AS last_ts\n  FROM v_bars_1min\n  WHERE source='ALOR'\n)\nSELECT CASE\n  WHEN NOT (\n    EXTRACT(ISODOW FROM now_msk) BETWEEN 1 AND 5\n    AND now_msk::time BETWEEN TIME '10:00' AND TIME '23:50'\n  ) THEN 0\n  WHEN last_ts IS NULL THEN 2\n  WHEN now() - last_ts > INTERVAL '5 minutes' THEN 3\n  ELSE 1\nEND AS status_code\nFROM s;",
+          "refId": "A"
+        }
+      ],
+      "title": "ALOR Stream Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 5
+      },
+      "id": 3,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT close AS last_close\nFROM v_bars_1min\nWHERE dataname = ${ticker:sqlstring}\n  AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\nORDER BY ts DESC, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Last Close (ALOR/Fallback)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 0,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 10
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", close AS \"Close 1m\"\nFROM b\nORDER BY 1;",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT\n  ts AS \"time\",\n  avg(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS \"SMA 20\"\nFROM b\nORDER BY 1;",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close,\n    COALESCE(volume, 0) AS volume\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT\n  ts AS \"time\",\n  SUM(close * volume) OVER (ORDER BY ts ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n    / NULLIF(SUM(volume) OVER (ORDER BY ts ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), 0) AS \"VWAP\"\nFROM b\nORDER BY 1;",
+          "refId": "C"
+        }
+      ],
+      "title": "Intraday Close + SMA20 + VWAP (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 10
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    COALESCE(volume, 0) AS volume\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", volume\nFROM b\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Intraday Volume (1m, ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH t AS (\n  SELECT\n    ${ticker:sqlstring}::text AS ticker_full,\n    split_part(${ticker:sqlstring}::text, '.', 2) AS ticker_plain\n),\nalor_or_fallback AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1d, t\n  WHERE source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND dataname = t.ticker_full\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nmoex AS (\n  SELECT ts, close\n  FROM v_bars_1d, t\n  WHERE source = 'MOEX_ISS'\n    AND dataname = t.ticker_plain\n    AND $__timeFilter(ts)\n)\nSELECT\n  ts AS \"time\",\n  100.0 * close / NULLIF(FIRST_VALUE(close) OVER (ORDER BY ts), 0) AS \"ALOR+Fallback idx\"\nFROM alor_or_fallback\nUNION ALL\nSELECT\n  ts AS \"time\",\n  100.0 * close / NULLIF(FIRST_VALUE(close) OVER (ORDER BY ts), 0) AS \"MOEX_ISS idx\"\nFROM moex\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Performance (ALOR/Fallback vs MOEX_ISS)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1h\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nh AS (\n  SELECT ts, close, lag(close) OVER (ORDER BY ts) AS prev_close\n  FROM src\n)\nSELECT ts AS \"time\", 100.0 * (close - prev_close) / NULLIF(prev_close, 0) AS \"Return %\"\nFROM h\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "1h Return % (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 8,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.84,
+        "groupWidth": 0.8,
+        "legend": {
+          "displayMode": "hidden",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "dataname",
+        "xTickLabelRotation": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts, dataname)\n    ts,\n    dataname,\n    COALESCE(volume, 0) AS volume\n  FROM v_bars_1min\n  WHERE source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND ts >= (date_trunc('day', now() AT TIME ZONE 'Europe/Moscow') AT TIME ZONE 'Europe/Moscow')\n  ORDER BY ts, dataname, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT dataname, SUM(volume) AS session_volume\nFROM src\nGROUP BY dataname\nORDER BY session_volume DESC\nLIMIT 12;",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 12 Symbols by Session Volume (ALOR/Fallback)",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "hidden",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    open,\n    high,\n    low,\n    close\n  FROM v_bars_15min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", open, high, low, close\nFROM src\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Candlestick 15m (ALOR/Fallback)",
+      "type": "candlestick"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "PASS"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAIL"
+                },
+                "2": {
+                  "color": "yellow",
+                  "index": 2,
+                  "text": "NO CHECKS"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 34
+      },
+      "id": 10,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE\n  WHEN COUNT(*) = 0 THEN 2\n  WHEN COUNT(*) FILTER (WHERE status='fail') > 0 THEN 1\n  ELSE 0\nEND AS dq_status\nFROM dq_results\nWHERE check_time >= now() - interval '60 minutes';",
+          "refId": "A"
+        }
+      ],
+      "title": "Data Quality Status (60m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 34
+      },
+      "id": 11,
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "check_time"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT check_time, dataset, check_name, severity, status, bad_rows\nFROM dq_results\nORDER BY check_time DESC\nLIMIT 30;",
+          "refId": "A"
+        }
+      ],
+      "title": "Latest Data Quality Checks",
+      "type": "table"
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Last Update Time (ALOR/Fallback)",
+      "description": "Latest bar timestamp for selected ticker (ALOR preferred, fallback otherwise)",
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 0,
+        "y": 42
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeAsIso",
+          "decimals": 0,
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT EXTRACT(EPOCH FROM ts) * 1000 AS last_update_ms\nFROM v_bars_1min\nWHERE dataname = ${ticker:sqlstring}\n  AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\nORDER BY ts DESC, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\nLIMIT 1;"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 70
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 8,
+        "y": 42
+      },
+      "id": 13,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts) ts, close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND ts >= now() - interval '3 days'\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nd AS (\n  SELECT ts, close - lag(close) OVER (ORDER BY ts) AS diff\n  FROM b\n),\ng AS (\n  SELECT ts, GREATEST(diff, 0) AS gain, GREATEST(-diff, 0) AS loss\n  FROM d\n),\nr AS (\n  SELECT\n    ts,\n    AVG(gain) OVER (ORDER BY ts ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS avg_gain,\n    AVG(loss) OVER (ORDER BY ts ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS avg_loss\n  FROM g\n)\nSELECT ROUND(\n  CASE\n    WHEN avg_loss IS NULL THEN NULL\n    WHEN avg_loss = 0 THEN 100\n    ELSE 100 - (100 / (1 + avg_gain / NULLIF(avg_loss, 0)))\n  END::numeric,\n  2\n) AS rsi14\nFROM r\nWHERE avg_gain IS NOT NULL\nORDER BY ts DESC\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "RSI14 (Latest)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 42
+      },
+      "id": 14,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    high,\n    low,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND ts >= now() - interval '3 days'\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nd AS (\n  SELECT\n    ts,\n    high,\n    low,\n    close,\n    lag(close) OVER (ORDER BY ts) AS prev_close\n  FROM b\n),\ntr AS (\n  SELECT\n    ts,\n    GREATEST(\n      high - low,\n      ABS(high - COALESCE(prev_close, close)),\n      ABS(low - COALESCE(prev_close, close))\n    ) AS true_range\n  FROM d\n)\nSELECT ROUND(\n  AVG(true_range) OVER (ORDER BY ts ROWS BETWEEN 13 PRECEDING AND CURRENT ROW)::numeric,\n  4\n) AS atr14\nFROM tr\nORDER BY ts DESC\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "ATR14 (Latest)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 47
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\ns AS (\n  SELECT\n    ts,\n    close,\n    AVG(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sma20,\n    STDDEV_SAMP(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sd20\n  FROM b\n)\nSELECT\n  ts AS \"time\",\n  close AS \"Close\",\n  sma20 AS \"SMA20\",\n  sma20 + 2 * sd20 AS \"BB Upper\",\n  sma20 - 2 * sd20 AS \"BB Lower\"\nFROM s\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Bollinger Bands (20,2) + Close",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSI14"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6ED0E0"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Overbought 70"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#E24D42"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Oversold 30"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#7EB26D"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 47
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nd AS (\n  SELECT ts, close - lag(close) OVER (ORDER BY ts) AS diff\n  FROM b\n),\ng AS (\n  SELECT ts, GREATEST(diff, 0) AS gain, GREATEST(-diff, 0) AS loss\n  FROM d\n),\nr AS (\n  SELECT\n    ts,\n    AVG(gain) OVER (ORDER BY ts ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS avg_gain,\n    AVG(loss) OVER (ORDER BY ts ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS avg_loss\n  FROM g\n)\nSELECT\n  ts AS \"time\",\n  CASE\n    WHEN avg_loss IS NULL THEN NULL\n    WHEN avg_loss = 0 THEN 100\n    ELSE 100 - (100 / (1 + avg_gain / NULLIF(avg_loss, 0)))\n  END AS \"RSI14\",\n  70::double precision AS \"Overbought 70\",\n  30::double precision AS \"Oversold 30\"\nFROM r\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "RSI14 (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 55
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    high,\n    low,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nd AS (\n  SELECT\n    ts,\n    high,\n    low,\n    close,\n    lag(close) OVER (ORDER BY ts) AS prev_close\n  FROM b\n),\ntr AS (\n  SELECT\n    ts,\n    GREATEST(\n      high - low,\n      ABS(high - COALESCE(prev_close, close)),\n      ABS(low - COALESCE(prev_close, close))\n    ) AS true_range\n  FROM d\n)\nSELECT\n  ts AS \"time\",\n  AVG(true_range) OVER (ORDER BY ts ROWS BETWEEN 13 PRECEDING AND CURRENT ROW) AS \"ATR14\"\nFROM tr\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "ATR14 (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 55
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nr AS (\n  SELECT\n    ts,\n    CASE\n      WHEN lag(close) OVER (ORDER BY ts) > 0 THEN LN(close / lag(close) OVER (ORDER BY ts))\n      ELSE NULL\n    END AS log_ret\n  FROM b\n)\nSELECT\n  ts AS \"time\",\n  100 * STDDEV_SAMP(log_ret) OVER (ORDER BY ts ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) AS \"Volatility % (30m)\"\nFROM r\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Rolling Volatility 30m (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "MACD"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#7EB26D"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Signal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EAB839"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Histogram"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#1F78C1"
+                }
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 70
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Zero"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#999999"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 63
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH RECURSIVE b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nordered AS (\n  SELECT ROW_NUMBER() OVER (ORDER BY ts) AS rn, ts, close\n  FROM b\n)\n,\nema AS (\n  SELECT rn, ts, close,\n         close::double precision AS ema12,\n         close::double precision AS ema26\n  FROM ordered WHERE rn = 1\n  UNION ALL\n  SELECT o.rn, o.ts, o.close,\n         (o.close * (2.0/13.0)) + e.ema12 * (1 - 2.0/13.0) AS ema12,\n         (o.close * (2.0/27.0)) + e.ema26 * (1 - 2.0/27.0) AS ema26\n  FROM ema e\n  JOIN ordered o ON o.rn = e.rn + 1\n),\nmacd AS (\n  SELECT rn, ts, (ema12 - ema26) AS macd_line\n  FROM ema\n),\nsignal AS (\n  SELECT rn, ts, macd_line, macd_line::double precision AS signal_line\n  FROM macd WHERE rn = 1\n  UNION ALL\n  SELECT m.rn, m.ts, m.macd_line,\n         (m.macd_line * (2.0/10.0)) + s.signal_line * (1 - 2.0/10.0) AS signal_line\n  FROM signal s\n  JOIN macd m ON m.rn = s.rn + 1\n)\nSELECT\n  ts AS \"time\",\n  macd_line AS \"MACD\",\n  signal_line AS \"Signal\",\n  (macd_line - signal_line) AS \"Histogram\",\n  0::double precision AS \"Zero\"\nFROM signal\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "MACD (12,26,9) (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Close"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6ED0E0"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EMA20"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#7EB26D"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "EMA50"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#EAB839"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 63
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH RECURSIVE b AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\nordered AS (\n  SELECT ROW_NUMBER() OVER (ORDER BY ts) AS rn, ts, close\n  FROM b\n)\n,\nema AS (\n  SELECT rn, ts, close,\n         close::double precision AS ema20,\n         close::double precision AS ema50\n  FROM ordered WHERE rn = 1\n  UNION ALL\n  SELECT o.rn, o.ts, o.close,\n         (o.close * (2.0/21.0)) + e.ema20 * (1 - 2.0/21.0) AS ema20,\n         (o.close * (2.0/51.0)) + e.ema50 * (1 - 2.0/51.0) AS ema50\n  FROM ema e\n  JOIN ordered o ON o.rn = e.rn + 1\n)\nSELECT\n  ts AS \"time\",\n  close AS \"Close\",\n  ema20 AS \"EMA20\",\n  ema50 AS \"EMA50\"\nFROM ema\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "EMA20/EMA50 Cross + Close (ALOR/Fallback)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "pg_dwh"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 2
+          },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 4
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Squeeze 2%"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#7EB26D"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Expansion 4%"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#E24D42"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 63
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "pg_dwh"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts) ts, close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\ns AS (\n  SELECT\n    ts,\n    AVG(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sma20,\n    STDDEV_SAMP(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sd20\n  FROM b\n)\nSELECT\n  ts AS \"time\",\n  CASE WHEN sma20 IS NULL OR sma20 = 0 OR sd20 IS NULL THEN NULL\n       ELSE 100.0 * (4 * sd20) / sma20\n  END AS \"BB Width %\",\n  2::double precision AS \"Squeeze 2%\",\n  4::double precision AS \"Expansion 4%\"\nFROM s\nORDER BY 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Bollinger Band Width % (20,2)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "vkr",
+    "alor",
+    "analytics"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "TQBR.SBER",
+          "value": "TQBR.SBER"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "pg_dwh"
+        },
+        "definition": "SELECT DISTINCT dataname FROM v_bars_1min ORDER BY 1",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Ticker",
+        "multi": false,
+        "name": "ticker",
+        "options": [],
+        "query": "SELECT DISTINCT dataname FROM v_bars_1min ORDER BY 1",
+        "refresh": 1,
+        "skipUrlSync": false,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "VKR Overview",
+  "uid": "vkr-overview",
+  "version": 13,
+  "weekStart": ""
+}
