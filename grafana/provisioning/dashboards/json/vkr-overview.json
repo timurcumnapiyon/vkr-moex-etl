@@ -1425,7 +1425,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Squeeze 2%"
+              "options": "Squeeze p20"
             },
             "properties": [
               {
@@ -1448,7 +1448,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Expansion 4%"
+              "options": "Expansion p90"
             },
             "properties": [
               {
@@ -1498,11 +1498,11 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH b AS (\n  SELECT DISTINCT ON (ts) ts, close\n  FROM v_bars_1min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n),\ns AS (\n  SELECT\n    ts,\n    AVG(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sma20,\n    STDDEV_SAMP(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sd20\n  FROM b\n)\nSELECT\n  ts AS \"time\",\n  CASE WHEN sma20 IS NULL OR sma20 = 0 OR sd20 IS NULL THEN NULL\n       ELSE 100.0 * (4 * sd20) / sma20\n  END AS \"BB Width %\",\n  2::double precision AS \"Squeeze 2%\",\n  4::double precision AS \"Expansion 4%\"\nFROM s\nORDER BY 1;",
+          "rawSql": "WITH params AS (\n  SELECT\n    $__timeFrom()::timestamptz AS from_ts,\n    $__timeTo()::timestamptz AS to_ts\n),\nb AS (\n  SELECT DISTINCT ON (v.ts)\n    v.ts,\n    v.close\n  FROM v_bars_1min v\n  CROSS JOIN params p\n  WHERE v.dataname = ${ticker:sqlstring}\n    AND v.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND v.ts >= p.to_ts - interval '30 days'\n    AND v.ts <= p.to_ts\n  ORDER BY v.ts, CASE WHEN v.source = 'ALOR' THEN 0 ELSE 1 END\n),\ns AS (\n  SELECT\n    ts,\n    AVG(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sma20,\n    STDDEV_SAMP(close) OVER (ORDER BY ts ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sd20\n  FROM b\n),\nbbw AS (\n  SELECT\n    ts,\n    CASE WHEN sma20 IS NULL OR sma20 = 0 OR sd20 IS NULL THEN NULL\n         ELSE 100.0 * (4 * sd20) / sma20\n    END AS bbw_pct\n  FROM s\n),\nlevels AS (\n  SELECT\n    percentile_cont(0.20) WITHIN GROUP (ORDER BY bbw_pct) AS squeeze_level,\n    percentile_cont(0.90) WITHIN GROUP (ORDER BY bbw_pct) AS expansion_level\n  FROM bbw\n  WHERE bbw_pct IS NOT NULL\n)\nSELECT\n  bbw.ts AS \"time\",\n  bbw.bbw_pct AS \"BB Width %\",\n  levels.squeeze_level AS \"Squeeze p20\",\n  levels.expansion_level AS \"Expansion p90\"\nFROM bbw\nCROSS JOIN levels\nCROSS JOIN params p\nWHERE bbw.ts BETWEEN p.from_ts AND p.to_ts\nORDER BY 1;",
           "refId": "A"
         }
       ],
-      "title": "Bollinger Band Width % (20,2)",
+      "title": "Bollinger Band Width % (20,2, adaptive)",
       "type": "timeseries"
     }
   ],

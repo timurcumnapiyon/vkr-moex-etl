@@ -83,12 +83,12 @@ def insert_rows(conn_dwh, rows, source: str, alor_batch_keys=None) -> int:
         for r in rows:
             key = (r["dataname"], r["datetime"])
 
-            # If ALOR for the same minute is present in this run, skip fallback row.
+            # Если в текущей загрузке для той же минуты есть ALOR, fallback-строку пропускаем.
             if source == SOURCE_FALLBACK and key in alor_batch_keys:
                 continue
 
             if source == SOURCE_FALLBACK:
-                # Never insert fallback if ALOR already exists in DWH for the same minute.
+                # Не вставляем fallback, если для той же минуты ALOR уже есть в DWH.
                 cur_dwh.execute(
                     """
                     INSERT INTO dwh_bars_1m
