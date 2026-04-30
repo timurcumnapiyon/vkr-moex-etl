@@ -13,6 +13,7 @@
         "type": "postgres",
         "uid": "pg_dwh"
       },
+      "description": "Запросы 5m/15m/30m/1h читают данные напрямую из агрегированных представлений PG_DWH. Это исключает потерю серий из-за несовпадения границ временного диапазона Grafana с границами bucket.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -59,7 +60,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '5 min'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"5m\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_5min b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_5min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n    AND EXTRACT(ISODOW FROM ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n    AND (ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", close AS \"5m\"\nFROM src\nORDER BY 1;",
           "refId": "A"
         },
         {
@@ -70,7 +71,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '15 min'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"15m\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_15min b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_15min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n    AND EXTRACT(ISODOW FROM ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n    AND (ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", close AS \"15m\"\nFROM src\nORDER BY 1;",
           "refId": "B"
         },
         {
@@ -81,7 +82,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '30 min'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"30m\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_30min b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_30min\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n    AND EXTRACT(ISODOW FROM ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n    AND (ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", close AS \"30m\"\nFROM src\nORDER BY 1;",
           "refId": "C"
         },
         {
@@ -92,7 +93,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "WITH grid AS (\n  SELECT generate_series(\n    date_trunc('minute', $__timeFrom()::timestamptz),\n    date_trunc('minute', $__timeTo()::timestamptz),\n    interval '1 hour'\n  ) AS ts\n)\nSELECT\n  g.ts AS \"time\",\n  b.close AS \"1h\"\nFROM grid g\nLEFT JOIN LATERAL (\n  SELECT close\n  FROM v_bars_1h b\n  WHERE b.ts = g.ts\n    AND b.dataname = ${ticker:sqlstring}\n    AND b.source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n  ORDER BY CASE WHEN b.source = 'ALOR' THEN 0 ELSE 1 END\n  LIMIT 1\n) b ON true\nWHERE EXTRACT(ISODOW FROM g.ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n  AND (g.ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\nORDER BY 1;",
+          "rawSql": "WITH src AS (\n  SELECT DISTINCT ON (ts)\n    ts,\n    close\n  FROM v_bars_1h\n  WHERE dataname = ${ticker:sqlstring}\n    AND source IN ('ALOR', 'MOEX_ISS_FALLBACK')\n    AND $__timeFilter(ts)\n    AND EXTRACT(ISODOW FROM ts AT TIME ZONE 'Europe/Moscow') BETWEEN 1 AND 5\n    AND (ts AT TIME ZONE 'Europe/Moscow')::time BETWEEN TIME '10:00' AND TIME '23:50'\n  ORDER BY ts, CASE WHEN source = 'ALOR' THEN 0 ELSE 1 END\n)\nSELECT ts AS \"time\", close AS \"1h\"\nFROM src\nORDER BY 1;",
           "refId": "D"
         }
       ],
